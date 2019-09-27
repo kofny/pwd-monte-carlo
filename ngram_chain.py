@@ -70,6 +70,7 @@ def parse_rockyou(fname='datasets/rockyou-withcount.txt.bz2'):
                 continue
     return res
 
+
 Node = collections.namedtuple('Node', 'transitions cumprobs logprobs')
 
 

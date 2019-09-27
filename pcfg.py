@@ -21,6 +21,7 @@ import model
 def zerodict():
     return collections.defaultdict(itertools.repeat(0).__next__)
 
+
 L, D, S = range(3)
 pattern_re = re.compile(r'(?:([a-zA-Z]+)|([0-9]+)|[^a-zA-Z0-9]+)')
 

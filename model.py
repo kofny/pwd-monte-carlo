@@ -53,6 +53,7 @@ class PosEstimator:
             realsize = len(logprobs)
         logn = math.log2(realsize)
         self.positions = (2 ** (logprobs - logn)).cumsum()
+        print(self.positions)
 
     def position(self, logprob):
         idx = bisect.bisect_right(self.logprobs, logprob)
@@ -68,8 +69,7 @@ class PosEstimator:
     def generate(self, model_generate, entropy):
         lp_threshold = self.logprob(2 ** entropy)
         for logprob, word in iter(model_generate, None):
-            if (logprob <= lp_threshold and
-                    lp_threshold < logprob - math.log2(random.random())):
+            if logprob <= lp_threshold < logprob - math.log2(random.random()):
                 return logprob, word
 
     def sample(self, model_generate, entropy, n):
