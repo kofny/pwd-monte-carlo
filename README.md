@@ -1,4 +1,5 @@
 english_parse.py is not contained in this file.
+venv: python 3.6.8
 
 # montecarlopwd
 
