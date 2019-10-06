@@ -1,0 +1,3 @@
+[submodule "semantic-guesser"]
+	path = semantic-guesser
+	url = https://github.com/cwwang15/semantic-guesser.git
