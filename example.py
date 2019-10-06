@@ -18,7 +18,8 @@ import backoff
 import model
 import ngram_chain
 import pcfg
-import semantic_word2vec
+# import semantic_word2vec
+import semantic_word2vec_optimal
 
 parser = argparse.ArgumentParser()
 parser.add_argument('passwordfile', help='password training set')
@@ -38,11 +39,11 @@ args = parser.parse_args()
 
 with open(args.passwordfile, 'rt') as f:
     training = [w.strip('\r\n') for w in f]
-models = {'{}-gram'.format(i): ngram_chain.NGramModel(training, i)
-          for i in range(args.min_ngram, args.max_ngram + 1)}
-models['Backoff'] = backoff.BackoffModel(training, 10)
-models['PCFG'] = pcfg.PCFG(training)
-models["Semantic-word2vec"] = semantic_word2vec.SemanticWord2VecModel(training, args.tag)
+models = {"Semantic-word2vec": semantic_word2vec_optimal.SemanticModel(args.passwordfile, args.tag)}
+# models = {'{}-gram'.format(i): ngram_chain.NGramModel(training, i)
+#           for i in range(args.min_ngram, args.max_ngram + 1)}
+# models['Backoff'] = backoff.BackoffModel(training, 10)
+# models['PCFG'] = pcfg.PCFG(training)
 
 samples = {name: list(model.sample(args.samplesize))
            for name, model in models.items()}

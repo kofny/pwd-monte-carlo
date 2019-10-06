@@ -53,7 +53,6 @@ class PosEstimator:
             realsize = len(logprobs)
         logn = math.log2(realsize)
         self.positions = (2 ** (logprobs - logn)).cumsum()
-        print(self.positions)
 
     def position(self, logprob):
         idx = bisect.bisect_right(self.logprobs, logprob)
