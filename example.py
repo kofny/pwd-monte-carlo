@@ -13,6 +13,7 @@ import argparse
 import csv
 # internal imports
 import itertools
+import os
 
 import backoff
 import model
@@ -36,6 +37,11 @@ parser.add_argument("--tag", type=str, default="default",
 parser.add_argument("--test", type=str, help="password test set")
 parser.add_argument("--result", type=str, help="write results into this file")
 args = parser.parse_args()
+
+model_root_dir = "./models"
+if not os.path.exists(model_root_dir):
+    os.mkdir(model_root_dir)
+args.tag = os.path.join(model_root_dir, args.tag)
 
 with open(args.passwordfile, 'rt') as f:
     training = [w.strip('\r\n') for w in f]
@@ -71,7 +77,7 @@ with open(args.result, "r") as csv_file:
     semantic_word2vec_col = [int(float(row["Semantic-word2vec"])) + 1 for row in reader]
     semantic_word2vec_col.sort()
     guesses, cracked = [0], [0]
-    guess_crack = open("../media/%s/guess-crack.txt" % args.tag, "w")
+    guess_crack = open("%s/guess-crack.txt" % args.tag, "w")
     for m, n in itertools.groupby(semantic_word2vec_col):
         guesses.append(m)
         cracked.append(cracked[-1] + len(list(n)))

@@ -137,7 +137,7 @@ class SemanticModel(model.Model):
         pass
 
     def __init__(self, training, model_name, with_counts=False):
-        model_dir = os.path.join("../media", model_name)
+        model_dir = model_name
         seg_file = os.path.join(model_dir, "seg.txt")
         cluster_file = os.path.join(model_dir, "cluster.txt")
         self.__preprocess(model_dir, training, seg_file, cluster_file)
