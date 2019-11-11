@@ -42,6 +42,7 @@ model_root_dir = "./models"
 if not os.path.exists(model_root_dir):
     os.mkdir(model_root_dir)
 args.tag = os.path.join(model_root_dir, args.tag)
+args.result = os.path.join(args.tag, args.result)
 
 with open(args.passwordfile, 'rt') as f:
     training = [w.strip('\r\n') for w in f]
@@ -60,21 +61,26 @@ modelnames = sorted(models)
 
 f_out = open(args.result, "w")
 csv_out = csv.writer(f_out)
-csv_out.writerow(["pwd"] + modelnames)
+# csv_out.writerow(["pwd"] + modelnames)
 
 with open(args.test, "r") as f:
     for pwd in f:
         pwd = pwd.strip("\r\n")
         estimations = [estimators[name].position(models[name].logprob(pwd))
                        for name in modelnames]
-        csv_out.writerow([pwd] + estimations)
+        f_out.write("%s\t%s\n" % (pwd, "\t".join(["%s" % str(s) for s in estimations])))
+        # csv_out.writerow([pwd] + estimations)
 
 f_out.flush()
 f_out.close()
 
 with open(args.result, "r") as csv_file:
-    reader = csv.DictReader(csv_file)
-    semantic_word2vec_col = [int(float(row["Semantic-word2vec"])) + 1 for row in reader]
+    semantic_word2vec_col = []
+    for line in csv_file:
+        line = line.strip("\r\n")
+        semantic_word2vec_col.append(float(line.split("\t")[1]))
+    # reader = csv.DictReader(csv_file)
+    # semantic_word2vec_col = [int(float(row["Semantic-word2vec"])) + 1 for row in reader]
     semantic_word2vec_col.sort()
     guesses, cracked = [0], [0]
     guess_crack = open("%s/guess-crack.txt" % args.tag, "w")

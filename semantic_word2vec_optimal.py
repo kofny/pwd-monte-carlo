@@ -3,11 +3,13 @@ import collections
 import itertools
 import math
 import os
+import pickle
 import random
 import re
 from enum import Enum
 
 import model
+import word2vec as wv
 import numpy
 import wordsegment as word_seg
 
@@ -39,6 +41,29 @@ def read_cluster(cluster_file, sep):
 
 
 struct_pattern = re.compile(r"(?:([a-zA-Z]+)|([0-9]+)|[^a-zA-Z0-9]+)")
+
+
+def word2vec(_seg_file, _cluster_file, _classes, _size, _window, _min_count, _cbow):
+    """
+
+    :param _seg_file:
+    :param _cluster_file:
+    :param _classes:
+    :param _size:
+    :param _window:
+    :param _min_count:
+    :param _cbow: cbow = 1 represents that using cbow strategy
+    :return:
+    """
+    wv.word2clusters(_seg_file, _cluster_file, _classes, _size, _window, _min_count, cbow=_cbow)
+    pass
+
+
+def fasttext(_seg_file, _cluster_file, _classes, _size, _window, _min_count, _cbow, trained_model_path):
+    import fasttext
+    model = fasttext.load_model(trained_model_path)
+
+    pass
 
 
 def extract_patterns(pwd, word_class_dict):
@@ -83,20 +108,21 @@ class SemanticModel(model.Model):
         if not os.path.exists(_seg_file):
             fin = open(_training, "r")
             fout = open(_seg_file, "w")
-            pattern = re.compile(r"[^a-zA-Z]")
+            pattern = re.compile(r"(?:([a-zA-Z]+))")
             counter = 0
-            append = self.__special_chr.join([self.__separation] * self.__window_size)
             for line in fin:
-                line = line.strip("\r\n")
-                line = pattern.sub("", line)
-                if len(line) <= 0:
-                    continue
-                result = word_seg.segment(line)
-                fout.write(self.__separation.join(result) + append)
                 if counter % 5000 == 0:
                     fout.flush()
                     print("preprocessed: %d" % counter)
                 counter += 1
+                line = line.strip("\r\n")
+                matches = pattern.finditer(line)
+                results = []
+                for match in matches:
+                    if len(match.group()) > 0:
+                        results.extend(word_seg.segment(match.group()))
+                if len(results) > 0:
+                    fout.write("%s\n" % " ".join(results))
             print("preprocess done! %d" % counter)
             fin.close()
             fout.flush()
@@ -104,13 +130,15 @@ class SemanticModel(model.Model):
             # eng_parse.segmentation(_training, _seg_file, separation=self.__separation,
             #                        window=self.__window_size - 1, special_chr=self.__special_chr)
         if not os.path.exists(_cluster_file):
-            import word2vec as wv
             wv.word2clusters(train=_seg_file, output=_cluster_file,
                              classes=self.__class_number, min_count=self.__min_count, window=self.__window_size)
         pass
 
-    def __process_no_link(self, training, cluster_file):
-        self.word_class_dict = read_cluster(cluster_file, self.__separation)
+    def __process_no_link(self, training):
+        if os.path.exists(self.grammar_pickle) and os.path.exists(self.struct_pickle):
+            self.grammar_dict = pickle.load(open(self.grammar_pickle, "rb"))
+            self.struct_dict = pickle.load(open(self.struct_pickle, "rb"))
+            return
 
         def zero_dict():
             return collections.defaultdict(itertools.repeat(0).__next__)
@@ -134,15 +162,34 @@ class SemanticModel(model.Model):
 
         self.struct_dict = __process(struct_dict)
         self.grammar_dict = {k: __process(v) for k, v in grammar_dict.items()}
+        pickle.dump(self.struct_dict, open(self.struct_pickle, "wb"))
+        pickle.dump(self.grammar_dict, open(self.grammar_pickle, "wb"))
         pass
 
-    def __init__(self, training, model_name, with_counts=False):
+    def __init__(self, training, model_name, class_number=100, with_counts=False, init=True):
         model_dir = model_name
         seg_file = os.path.join(model_dir, "seg.txt")
         cluster_file = os.path.join(model_dir, "cluster.txt")
+        self.__class_number = class_number
+        self.struct_pickle = os.path.join(model_dir, "struct.pickle")
+        self.grammar_pickle = os.path.join(model_dir, "grammar.pickle")
+        if not init:
+            return
         self.__preprocess(model_dir, training, seg_file, cluster_file)
-        self.__process_no_link(training, cluster_file)
+        print("preprocess done")
+        self.word_class_dict = read_cluster(cluster_file, self.__separation)
+        self.__process_no_link(training)
         print("init done")
+
+    def load_pickle(self):
+        fin_struct = open(self.struct_pickle, "rb")
+        struct_dict = pickle.load(fin_struct)
+        fin_struct.close()
+        fin_grammar = open(self.grammar_pickle, "rb")
+        grammar_dict = pickle.load(fin_grammar)
+        fin_grammar.close()
+        return grammar_dict, struct_dict
+        pass
 
     def generate(self):
 
