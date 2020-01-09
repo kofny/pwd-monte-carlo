@@ -2,7 +2,7 @@ from combine.indicator.combination_indicator import CombinationIndicator
 
 
 class ContainDegree(CombinationIndicator):
-    def can_combine(self, master_set: set, servant_set: set) -> bool:
+    def similarity(self, master_set: set, servant_set: set) -> float:
         """
 
         :param master_set: main set
@@ -10,5 +10,4 @@ class ContainDegree(CombinationIndicator):
         :return: whether can be combined or not
         """
         intersection = set.intersection(master_set, servant_set)
-        return (len(intersection) / len(master_set)) >= self.threshold
-
+        return len(intersection) / len(master_set)

@@ -8,7 +8,7 @@ models
 
 # C extensions
 *.so
-
+*.pdf
 # Distribution / packaging
 .Python
 build/

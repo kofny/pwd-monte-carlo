@@ -1,7 +1,6 @@
 import collections
 import os
 import shutil
-from functools import reduce
 
 from combine.indicator.indicator_factory import Indicator, IndicatorFactory
 from semantic_word2vec_optimal import SemanticModel, Struct
@@ -72,13 +71,25 @@ def combine_word2vec_to_semantic(semantic_model_dir, word2vec_model_dir, combine
         grammars, _, _ = grammar_dict.get(classification)
         word2vec_set = set(grammars.keys())
         combined = False
-        for nonterminal in semantic_nonterminals:
-            semantic_set = set(semantic_nonterminals.get(nonterminal))
-            if _indicator.can_combine(semantic_set, word2vec_set):
-                semantic_nonterminals.get(nonterminal).update(grammars)
+
+        if meet_and_stop:
+            max_key = None
+            max_similarity = 0
+            for key, nonterminal in semantic_nonterminals.items():
+                semantic_set = set(nonterminal)
+                cur_similarity = _indicator.similarity(semantic_set, word2vec_set)
+                if cur_similarity > max_similarity:
+                    max_similarity = cur_similarity
+                    max_key = key
+            if max_key is not None:
                 combined = True
-                if meet_and_stop:
-                    break
+                semantic_nonterminals.get(max_key).update(grammars)
+        else:
+            for nonterminal in semantic_nonterminals:
+                semantic_set = set(semantic_nonterminals.get(nonterminal))
+                if _indicator.can_combine(semantic_set, word2vec_set):
+                    semantic_nonterminals.get(nonterminal).update(grammars)
+                    combined = True
         if not combined:
             un_combined_cnt += 1
             # print("un_combined_cnt: ", un_combined_cnt, ", classification: ", classification)
@@ -104,14 +115,6 @@ def combine_word2vec_to_semantic(semantic_model_dir, word2vec_model_dir, combine
     pass
 
 
-# combine_word2vec_to_semantic(
-#     semantic_model_dir="/home/cw/Codes/Python/Chaunecy/fudan-monte-carlo-pwd/models/rockyou-semantic-14-255",
-#     word2vec_model_dir="/home/cw/Codes/Python/Chaunecy/fudan-monte-carlo-pwd/models/rockyou-word2vec-14-255",
-#     combine_model_dir="/home/cw/Codes/Python/Chaunecy/fudan-monte-carlo-pwd/models/rockyou-combine-14-255",
-#     use_indicator=Indicator.ContainDegree,
-#     threshold=.5,
-#     meet_and_stop=True
-# )
 semantic_14_255_dir = "/home/cw/Codes/Python/Chaunecy/fudan-monte-carlo-pwd/models/rockyou-semantic-14-255"
 word2vec_14_255_dir = "/home/cw/Codes/Python/Chaunecy/fudan-monte-carlo-pwd/models/rockyou-word2vec-14-255"
 combine_14_255_dir = "/home/cw/Codes/Python/Chaunecy/fudan-monte-carlo-pwd/models/rockyou-combine-14-255"
@@ -124,13 +127,13 @@ for indicator in Indicator:
     for threshold in thresholds:
         for strategy in strategies:
             print(f"indicator: {indicator}, threshold: {threshold}, meet_and_stop: {strategy}")
-            un_combined_cnt = combine_word2vec_to_semantic(semantic_model_dir=semantic_14_255_dir,
-                                                           word2vec_model_dir=word2vec_14_255_dir,
-                                                           combine_model_dir=combine_14_255_dir,
-                                                           use_indicator=indicator,
-                                                           _threshold=threshold,
-                                                           meet_and_stop=strategy)
-            if strategy is False and un_combined_cnt == 100:
+            _un_combined_cnt = combine_word2vec_to_semantic(semantic_model_dir=semantic_14_255_dir,
+                                                            word2vec_model_dir=word2vec_14_255_dir,
+                                                            combine_model_dir=combine_14_255_dir,
+                                                            use_indicator=indicator,
+                                                            _threshold=threshold,
+                                                            meet_and_stop=strategy)
+            if strategy is False and _un_combined_cnt == 100:
                 can_break = True
                 break
         if can_break:
