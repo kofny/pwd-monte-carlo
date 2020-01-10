@@ -18,6 +18,7 @@ import os
 from pwdmodels import model, semantic_word2vec_optimal
 
 # import semantic_word2vec
+# import semantic_word2vec_optimal
 
 parser = argparse.ArgumentParser()
 parser.add_argument('passwordfile', help='password training set')
