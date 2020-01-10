@@ -17,8 +17,7 @@ import shelve
 
 import numpy
 
-import model
-import ngram_chain
+from pwdmodels import model, ngram_chain
 
 TmpNode = collections.namedtuple('TmpNode',
                                  'transitions probabilities '

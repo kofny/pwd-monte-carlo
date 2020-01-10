@@ -8,7 +8,7 @@ import random
 import re
 from enum import Enum
 
-import model
+from pwdmodels import model
 import word2vec as wv
 import numpy
 import wordsegment as word_seg

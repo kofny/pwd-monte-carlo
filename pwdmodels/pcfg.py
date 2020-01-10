@@ -15,7 +15,7 @@ import re
 
 import numpy
 
-import model
+from pwdmodels import model
 
 
 def zerodict():

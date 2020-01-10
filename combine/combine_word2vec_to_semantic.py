@@ -3,7 +3,7 @@ import os
 import shutil
 
 from combine.indicator.indicator_factory import Indicator, IndicatorFactory
-from semantic_word2vec_optimal import SemanticModel, Struct
+from pwdmodels.semantic_word2vec_optimal import SemanticModel, Struct
 
 
 def combine_word2vec_to_semantic(semantic_model_dir, word2vec_model_dir, combine_model_dir,

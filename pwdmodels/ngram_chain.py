@@ -19,7 +19,7 @@ import shelve
 
 import numpy as np
 
-import model
+from pwdmodels import model
 
 __default = object()
 

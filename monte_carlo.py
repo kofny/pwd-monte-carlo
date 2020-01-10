@@ -7,10 +7,7 @@ import sys
 
 import matplotlib.pyplot as plt
 
-import backoff
-import model
-import ngram_chain
-import pcfg
+from pwdmodels import model, pcfg, backoff, ngram_chain
 
 
 def gen_guess_crack(estimation, upper_bound):

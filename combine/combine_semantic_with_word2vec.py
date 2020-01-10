@@ -5,7 +5,7 @@ import shutil
 
 import numpy
 
-from semantic_word2vec_optimal import SemanticModel, Struct
+from pwdmodels.semantic_word2vec_optimal import SemanticModel, Struct
 
 
 def combine_semantic_to_word2vec(semantic_model_dir, word2vec_model_dir, combine_model_dir):
