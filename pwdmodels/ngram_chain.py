@@ -88,7 +88,11 @@ class NGramModel(model.Model):
     def get_from_shelf(cls, shelfname, *args, **kwargs):
         return cls([], *args, shelfname=shelfname, **kwargs)
 
-    def __init__(self, words, n, with_counts=False, shelfname=None):
+    def __init__(self, words, n, with_counts=False, shelfname=None, delta=0,
+                 alphabets_string=''
+                                  'abcdefghijklmnopqrstuvwxyz'
+                                  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                                  '0123456789~!@#$%^&*()_+-=`[]\\{}|;":\",./<>?\''):
         self.start = start = default_start(n)
         self.end = end = '\0'
         transitions = collections.defaultdict(list)
@@ -97,6 +101,39 @@ class NGramModel(model.Model):
             state, transition = ngram[:-1], ngram[-1]
             transitions[state].append((count, transition))
 
+        # use additive smoothing
+        if delta > .0000001 and n == 2:
+            start_ctlist = transitions[start]
+            alphabets = set(alphabets_string)
+            smoothed_ctlist = []
+            for c, t in start_ctlist:
+                alphabets.discard(t)
+                smoothed_ctlist.append((c + delta, t))
+            for t in alphabets:
+                smoothed_ctlist.append((delta, t))
+
+            transitions[start] = smoothed_ctlist
+            del alphabets
+            del smoothed_ctlist
+            alpha_trans = set(alphabets_string + '\0')
+            for state in set(alphabets_string):
+                if state in transitions:
+                    smoothed_ctlist = []
+                    alphabets = set(alphabets_string)
+                    state_ctlist = transitions[state]
+                    for c, t in state_ctlist:
+                        smoothed_ctlist.append((c + delta, t))
+                        alphabets.discard(t)
+                    for t in alphabets:
+                        smoothed_ctlist.append((delta, t))
+                    transitions[state] = smoothed_ctlist
+                    pass
+                else:
+                    for t in alpha_trans:
+                        transitions[state].append((delta, t))
+                        pass
+            pass
+        print(len(transitions))
         flags = 'c' if words else 'r'
         self.nodes = nodes = self.setup_nodes(shelfname, flags)
         for state, ctlist in transitions.items():

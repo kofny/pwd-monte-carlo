@@ -1,6 +1,5 @@
 import argparse
 import collections
-import itertools
 import math
 import os
 import sys
@@ -10,15 +9,15 @@ import matplotlib.pyplot as plt
 from pwdmodels import model, pcfg, backoff, ngram_chain
 
 
-def gen_guess_crack(estimation, upper_bound):
-    guesses = [0]
-    cracked = [0]
-    estimation.sort()
-    for m, n in itertools.groupby(estimation):
-        if m <= upper_bound:
-            guesses.append(m)
-            cracked.append((cracked[-1]) + len(list(n)))
-    return guesses[1:], cracked[1:]
+def gen_guess_crack(estimations: [int], upper_bound):
+    estimations.sort()
+    gc_pairs = {}
+    for idx, est in enumerate(estimations):
+        if est < upper_bound:
+            gc_pairs[est] = idx
+        else:
+            break
+    return list(gc_pairs.keys()), list(gc_pairs.values())
     pass
 
 
@@ -85,7 +84,7 @@ def single_pwd_set_multi_models():
             estimations = [math.ceil(estimators[name].position(models[name].logprob(pwd)))
                            for name in names]
             for idx, name in enumerate(names):
-                all_estimations[name].append(estimations[idx])
+                all_estimations[name].append(math.ceil(estimations[idx]))
             fout.write(splitter.join([f"{str(s)}" for s in estimations]))
             fout.write("\n")
     guess_crack_pairs = {name: "" for name in names}
@@ -112,6 +111,8 @@ def single_model_multi_pwd_sets():
                         help="sample size of monte carlo")
     parser.add_argument("-u", "--monte-carlo-upper-bound", required=False, type=int, default=10 ** 20,
                         help="upper bound of guess-number")
+    parser.add_argument("-b", "--delta-for-2-gram", dest="delta2", required=False, type=float, default=.0,
+                        help='additive delta smoothing for 2-gram')
     args = parser.parse_args()
     if len(args.pwd_sets) != len(args.test_sets):
         print("pwd sets does not match test sets")
@@ -137,7 +138,7 @@ def single_model_multi_pwd_sets():
             if model_choice == "backoff":
                 pwd_model = backoff.BackoffModel(training, args.threshold)
             elif model_choice == "2":
-                pwd_model = ngram_chain.NGramModel(training, 2)
+                pwd_model = ngram_chain.NGramModel(training, 2, delta=args.delta2)
             elif model_choice == "4":
                 pwd_model = ngram_chain.NGramModel(training, 4)
             elif model_choice == 'pcfg':
@@ -155,10 +156,16 @@ def single_model_multi_pwd_sets():
             for pwd in f_test:
                 pwd = pwd.strip("\r\n")
                 estimation = estimator.position(pwd_model.logprob(pwd))
-                estimations.append(estimation)
+                estimations.append(math.ceil(estimation))
         print("test set processed...")
         guess_crack_pairs[test_set.split(os.sep)[-1] if os.sep in test_set else test_set] = \
             gen_guess_crack(estimations, args.monte_carlo_upper_bound)
+    fout = open(args.result, "w")
+    for gc_name, gc_pair in guess_crack_pairs.items():
+        fout.write(f"{gc_name}\n")
+        guesses, cracked = gc_pair
+        fout.writelines([f"{g} : {c}\n" for g, c in zip(guesses, cracked)])
+    fout.close()
     draw_guess_crack_curve(guess_crack_pairs, args.figure)
     pass
 
