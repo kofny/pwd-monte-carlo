@@ -4,7 +4,8 @@ __pycache__/
 *.pyc
 *$py.class
 .idea
-
+*.txt
+!requirements.txt
 models
 
 # C extensions
